@@ -10,13 +10,12 @@ const app = express();
 // app.use((request, response)=>{
 //     response.send("Hello World from the server");
 // })
+
+app.use("/hello/2",(req,res)=>{
+    res.send("Abracdabraaaaaa");
+});
 app.use("/test",(req,res)=>{
     res.send("Hello World from the test server");
-    
-});
-app.use("/",(req,res)=>{
-    res.send("Hello World from the server");
-    
 });
 app.use("/hello",(req,res)=>{
     res.send("Hello World from the hello server");
@@ -26,3 +25,6 @@ app.listen(3000,()=>{
     console.log("Server is listening on port 3000");
     
 }); 
+app.use("/",(req,res)=>{
+    res.send("Hello Sailesh");
+});
