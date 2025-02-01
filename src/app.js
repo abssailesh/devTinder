@@ -59,29 +59,44 @@ const app = express();
 //     res.send({"firstName" : "Sailesh"});
 // });
 
-app.use('/users',(req,res,next)=>{
-    console.log("Handling the route user 1");
-    // res.send("Response 1");
-    next();
-},(req,res,next)=>{
-    console.log("Handling the route user 2");
-    // res.send("Response 2");
-    next();
-},(req,res,next)=>{
-    console.log("Handling the route user 3");
-    // res.send("Response 3");
-    next();
-},(req,res,next)=>{
-    console.log("Handling the route user 4");
-    // res.send("Response 4");
-    next();
-}
-,(req,res)=>{
-    console.log("Handling the route user 5");
-    res.send("Response 5");
+// app.use('/users',(req,res,next)=>{
+//     console.log("Handling the route user 1");
+//     // res.send("Response 1");
+//     next();
+// },(req,res,next)=>{
+//     console.log("Handling the route user 2");
+//     // res.send("Response 2");
+//     next();
+// },(req,res,next)=>{
+//     console.log("Handling the route user 3");
+//     // res.send("Response 3");
+//     next();
+// },(req,res,next)=>{
+//     console.log("Handling the route user 4");
+//     // res.send("Response 4");
+//     next();
+// }
+// ,(req,res)=>{
+//     console.log("Handling the route user 5");
+//     res.send("Response 5");
+// });
+
+const { adminAuth , userAuth } = require("./middlewares/auth")
+
+app.use("/admin",adminAuth);
+// app.use("/user", userAuth,(req,res)=>{
+//     res.send("User Data sent!");
+// });
+
+app.post("/user/login",(req,res)=>{
+    res.send("User Logged in Successfully!");
+})
+app.get('/admin/getAllData', (req,res)=>{
+    res.send("Sent All Data!");
 });
-
-
+app.get("/admin/deleteUser", (req,res)=>{
+    res.send("Deleted User!");
+});
 app.listen(3000,()=>{
     console.log("Server is listening on port 3000");
 
