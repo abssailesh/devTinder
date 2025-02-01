@@ -81,22 +81,38 @@ const app = express();
 //     res.send("Response 5");
 // });
 
-const { adminAuth , userAuth } = require("./middlewares/auth")
+// const { adminAuth , userAuth } = require("./middlewares/auth")
 
-app.use("/admin",adminAuth);
-// app.use("/user", userAuth,(req,res)=>{
-//     res.send("User Data sent!");
+// app.use("/admin",adminAuth);
+// // app.use("/user", userAuth,(req,res)=>{
+// //     res.send("User Data sent!");
+// // });
+
+// app.post("/user/login",(req,res)=>{
+//     res.send("User Logged in Successfully!");
+// })
+// app.get('/admin/getAllData', (req,res)=>{
+//     res.send("Sent All Data!");
+// });
+// app.get("/admin/deleteUser", (req,res)=>{
+//     res.send("Deleted User!");
 // });
 
-app.post("/user/login",(req,res)=>{
-    res.send("User Logged in Successfully!");
-})
-app.get('/admin/getAllData', (req,res)=>{
-    res.send("Sent All Data!");
+app.get("/userData",(req,res,next)=>{
+    try{
+        throw new Error("dbfhsjfjdfs");
+        res.send("User Data sent!");
+        
+    }catch(e){
+        // res.status(500).send('Contact The Support Team');
+        next(e);
+    };
 });
-app.get("/admin/deleteUser", (req,res)=>{
-    res.send("Deleted User!");
-});
+app.use("/",(err,req,res,next)=>{
+    if(err){
+        res.status(500).send("Something went wrong")
+    }
+}); 
 app.listen(3000,()=>{
     console.log("Server is listening on port 3000");
 
