@@ -6,6 +6,8 @@ const express = require('express');
 
 const app = express();
 
+const connectDb = require('./config/database'); 
+
 //  Request Handler which is basically how the server responds to the incoming request.
 // app.use((request, response)=>{
 //     response.send("Hello World from the server");
@@ -98,22 +100,35 @@ const app = express();
 //     res.send("Deleted User!");
 // });
 
-app.get("/userData",(req,res,next)=>{
-    try{
-        throw new Error("dbfhsjfjdfs");
-        res.send("User Data sent!");
+// app.get("/userData",(req,res,next)=>{
+//     try{
+//         throw new Error("dbfhsjfjdfs");
+//         res.send("User Data sent!");
         
-    }catch(e){
-        // res.status(500).send('Contact The Support Team');
-        next(e);
-    };
-});
-app.use("/",(err,req,res,next)=>{
-    if(err){
-        res.status(500).send("Something went wrong")
-    }
-}); 
-app.listen(3000,()=>{
-    console.log("Server is listening on port 3000");
+//     }catch(e){
+//         // res.status(500).send('Contact The Support Team');
+//         next(e);
+//     };
+// });
+// app.use("/",(err,req,res,next)=>{
+//     if(err){
+//         res.status(500).send("Something went wrong")
+//     }
+// }); 
 
-}); 
+connectDb().then(()=>{
+    console.log("Connected to database");  
+    app.listen(3000,()=>{
+        console.log("Server is listening on port 3000");
+    
+    }); 
+}).catch(err=>{
+    console.error("Error connecting to database",err);
+ 
+});
+
+
+
+
+
+
