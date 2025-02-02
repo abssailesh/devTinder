@@ -6,7 +6,11 @@ const express = require('express');
 
 const app = express();
 
-const connectDb = require('./config/database'); 
+const connectDB = require('./config/database');
+
+const User = require('./models/user');
+
+app.use(express.json());
 
 //  Request Handler which is basically how the server responds to the incoming request.
 // app.use((request, response)=>{
@@ -116,11 +120,112 @@ const connectDb = require('./config/database');
 //     }
 // }); 
 
-connectDb().then(()=>{
+
+
+//  Finding data with the help of email.
+
+app.get("/user",async (req,res)=>{
+    const userEmail = req.body.emailId;
+
+    try{
+        const users = await User.find({emailId: userEmail});
+
+        if(users.length === 0){
+            return res.status(404).send("User not found");
+        }else{
+            
+            res.send(users);
+        }
+
+    }catch(e){
+        res.status(400).send("Something went wrong");
+    }
+})
+
+
+// feed API
+app.get('/feed',async (req,res)=>{
+    try{
+        const allUsers = await User.find({});
+        res.send(allUsers);
+    }catch(err){
+        res.status(400).send("Something went wrong")
+    }
+});
+
+app.delete("/user",async (req, res)=>{
+
+    const userId = req.body.userId;
+    try{
+        const user = await User.findByIdAndDelete(userId);
+        res.send("User deleted");
+    }catch(err){
+        res.status(400).send("Something went wrong");
+    }
+});
+
+
+
+app.post("/signup",async (req,res)=>{
+    console.log(req.body);
+    // using dummy data first
+    // const userObj = {
+    //     firstName:"sailesh",
+    //     lastName:"Kumar",
+    //     emailId:"sailesh@gmail.com",
+    //     password:"sailesh@123",
+    //     gender:"male",
+    // }
+    // Creating a new instance of the user model.
+    // const user = new User(userObj);
+        const user = new User(req.body);
+
+    // const user = new User(
+    //     {
+    //         firstName:"sailesh",
+    //         lastName:"Kumar",
+    //         email:"sailesh@gmail.com",
+    //         password:"123456"
+    //     }
+    // );
+    try{
+        await user.save();
+        res.send('user added successfully')
+    }catch(err){
+        res.status(500).send("Error saving user: " + err.message);
+    }
+
+});
+app.patch('/user/:userId',async (req, res) => {
+// app.patch('/user',async (req, res) => {
+    // const userId = req.body.userId;
+    const userId = req.params?.userId;
+    console.log(userId);
+    console.log(req.body);
+    const data = req.body;
+    console.log(data);
+    
+    try{
+        const allowedUpdates = ["about","gender","age","skills"];
+        const isUpdateAllowed = Object.keys(data).every((k)=>allowedUpdates.includes(k));
+        if(!isUpdateAllowed){
+            throw new Error('Updates not allowed')
+        };
+        if(data?.skills.length > 5){
+            throw new Error('Skills should not exceed 5')
+        }
+        const user = await User.findByIdAndUpdate({_id: userId},data,{runValidators:true});
+        console.log(user),
+        res.send("User updated successfully");
+    }catch(err) {
+        res.status(400).send("Update failed: " + err.message);
+    };
+})
+
+connectDB().then(()=>{
     console.log("Connected to database");  
     app.listen(3000,()=>{
         console.log("Server is listening on port 3000");
-    
     }); 
 }).catch(err=>{
     console.error("Error connecting to database",err);
