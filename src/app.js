@@ -10,7 +10,14 @@ const connectDB = require('./config/database');
 
 const User = require('./models/user');
 
+const {validateSignUpData} = require('./utils/validation');
+
+const bcrypt = require('bcrypt');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken');
+
 app.use(express.json());
+app.use(cookieParser());
 
 //  Request Handler which is basically how the server responds to the incoming request.
 // app.use((request, response)=>{
@@ -121,9 +128,70 @@ app.use(express.json());
 // }); 
 
 
+// Login API
+
+app.get("/login",async (req,res)=>{
+    try{
+        const {emailId, password} = req.body;
+        const user = await User.findOne({emailId: emailId});
+        if(!user){
+            throw new Error("Invalid Credentials");
+        }
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+    
+        if(isPasswordValid){
+            // Create a JWT token
+            const token = jwt.sign({_id:user._id},"Dev@Tinder$790");
+            // console.log(token);
+
+            // Add the token to cookie and send the response back to the user.
+            res.cookie("token", token);
+
+            
+            res.send("Login Successful");
+        }else{
+            throw new Error("Invalid Credentials");
+        }
+    }catch(err){
+        res.status(400).send("ERROR:"+ err.message);
+
+    }
+    
+});
+
+
+app.get('/profile', async (req, res)=>{
+    try{
+        const cookies = req.cookies;
+    
+        const {token} = cookies;
+        if(!token){
+            throw new Error("Invalid Token");
+        }
+    
+    
+        // Validate my token
+    
+        const decodedMessage = await jwt.verify(token,"Dev@Tinder$790");
+        // console.log(decodedMessage);
+        const{_id} = decodedMessage;
+        // console.log("logged in user is :" + _id); 
+        const user = await User.findById(_id);
+        if(!user){
+            throw new Error("User not found");
+        }
+    
+        // console.log(cookies);
+        // res.send("Sending Cookies");
+        res.send(user);
+
+    }catch(e){
+        res.status(400).send("ERROR: " + e.message);
+    }
+});
+
 
 //  Finding data with the help of email.
-
 app.get("/user",async (req,res)=>{
     const userEmail = req.body.emailId;
 
@@ -140,7 +208,7 @@ app.get("/user",async (req,res)=>{
     }catch(e){
         res.status(400).send("Something went wrong");
     }
-})
+});
 
 
 // feed API
@@ -168,6 +236,34 @@ app.delete("/user",async (req, res)=>{
 
 app.post("/signup",async (req,res)=>{
     console.log(req.body);
+    try{
+        // validation of the data
+        validateSignUpData(req);
+        const {firstName, lastName,emailId,gender,password} = req.body;
+
+        // encrypting the password
+
+        const passwordHash = await bcrypt.hash(password,10);
+        console.log(passwordHash);
+        
+
+
+
+        // Creating a new instance of the user model
+        // const user = new User(req.body);
+        const user = new User({
+            firstName,
+            lastName,
+            emailId,
+            password:passwordHash,
+            gender
+        });
+
+        await user.save();
+        res.send('user added successfully');
+    }catch(err){
+        return res.status(400).send("ERROR:" + err.message);
+    }
     // using dummy data first
     // const userObj = {
     //     firstName:"sailesh",
@@ -178,7 +274,7 @@ app.post("/signup",async (req,res)=>{
     // }
     // Creating a new instance of the user model.
     // const user = new User(userObj);
-        const user = new User(req.body);
+        // const user = new User(req.body);
 
     // const user = new User(
     //     {
@@ -188,12 +284,12 @@ app.post("/signup",async (req,res)=>{
     //         password:"123456"
     //     }
     // );
-    try{
-        await user.save();
-        res.send('user added successfully')
-    }catch(err){
-        res.status(500).send("Error saving user: " + err.message);
-    }
+    // try{
+    //     await user.save();
+    //     res.send('user added successfully')
+    // }catch(err){
+    //     res.status(500).send("ERROR: " + err.message);
+    // }
 
 });
 app.patch('/user/:userId',async (req, res) => {
@@ -213,6 +309,9 @@ app.patch('/user/:userId',async (req, res) => {
         };
         if(data?.skills.length > 5){
             throw new Error('Skills should not exceed 5')
+        };
+        if(data?.skills.length > 6){
+            throw new Error('Skills should not exceed 6')
         }
         const user = await User.findByIdAndUpdate({_id: userId},data,{runValidators:true});
         console.log(user),
