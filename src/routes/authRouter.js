@@ -1,5 +1,4 @@
 const express = require('express');
-
 const authRouter = express.Router();   
 const User = require('../models/user');
 const {validateSignUpData} = require('../utils/validation');
@@ -8,7 +7,7 @@ const bcrypt = require('bcrypt');
 
 
 authRouter.post("/signup",async (req,res)=>{
-    console.log(req.body);
+    // console.log(req.body);
     try{
         // validation of the data
         validateSignUpData(req);
@@ -17,11 +16,7 @@ authRouter.post("/signup",async (req,res)=>{
         // encrypting the password
 
         const passwordHash = await bcrypt.hash(password,10);
-        console.log(passwordHash);
-        
-
-
-
+        // console.log(passwordHash);
         // Creating a new instance of the user model
         // const user = new User(req.body);
         const user = new User({
