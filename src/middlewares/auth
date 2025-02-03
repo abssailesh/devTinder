@@ -1,3 +1,5 @@
+ const jwt = require("jsonwebtoken");
+ const User = require("../models/user");
  const adminAuth = (req,res,next)=>{
     
     console.log("Admin authorization is being checked");
@@ -10,18 +12,38 @@
     }
 };
 
-const userAuth = (req,res,next)=>{
+// const userAuth = (req,res,next)=>{
     
-    console.log("User authorization is being checked");
-    const token = "abc";
-    const isUserAuthorized = token === "abc";
-    if(isUserAuthorized){
-        next();
-    }else{
-        res.status(401).send("Unauthorized");
-    }
-};
+//     console.log("User authorization is being checked");
+//     const token = "abc";
+//     const isUserAuthorized = token === "abc";
+//     if(isUserAuthorized){
+//         next();
+//     }else{
+//         res.status(401).send("Unauthorized");
+//     }
+// };
 
+const userAuth = async (req,res,next) => {
+    // Read the token from the cookie
+    try{
+        const {token} = req.cookies;
+        if(!token){
+            throw new Error("Token missing")
+        }
+        const decodedObj = await jwt.verify(token,"Dev@Tinder$790");
+        const{ _id } = decodedObj;
+        const user = await User.findById(_id);
+        if(!user){
+            throw new Error("User not found");
+        }
+        req.user = user;
+        next();
+    }catch(e){
+        res.status(400).send('Error: ' + e.message)
+    }
+
+};
 module.exports = {
     adminAuth,
     userAuth,
