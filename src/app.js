@@ -8,17 +8,26 @@ const app = express();
 
 const connectDB = require('./config/database');
 
-const User = require('./models/user');
+// const User = require('./models/user');
 
-const {validateSignUpData} = require('./utils/validation');
+// const {validateSignUpData} = require('./utils/validation');
 
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcrypt');
 const cookieParser = require('cookie-parser');
 const jwt = require('jsonwebtoken');
-const {userAuth} = require('./middlewares/auth');
+// const {userAuth} = require('./middlewares/auth');
 
 app.use(express.json());
 app.use(cookieParser());
+
+const authRouter = require("./routes/authRouter.js");
+const profileRouter = require("./routes/profileRouter.js");
+const requestRouter = require("./routes/requestRouter.js");
+
+
+app.use('/',authRouter);
+app.use('/',profileRouter);
+app.use('/',requestRouter);
 
 //  Request Handler which is basically how the server responds to the incoming request.
 // app.use((request, response)=>{
@@ -130,69 +139,6 @@ app.use(cookieParser());
 
 
 // Login API
-
-app.post("/login",async (req,res)=>{
-    try{
-        const {emailId, password} = req.body;
-        const user = await User.findOne({emailId: emailId});
-        if(!user){
-            throw new Error("Invalid Credentials");
-        }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-    
-        if(isPasswordValid){
-            // Create a JWT token
-            const token = jwt.sign({_id:user._id},"Dev@Tinder$790",{expiresIn:"7d"});
-            // console.log(token);
-
-            // Add the token to cookie and send the response back to the user.
-            res.cookie("token", token);
-
-            
-            res.send("Login Successful");
-        }else{
-            throw new Error("Invalid Credentials");
-        }
-    }catch(err){
-        res.status(400).send("ERROR:"+ err.message);
-
-    }
-    
-});
-
-
-app.get('/profile', userAuth, async (req, res)=>{
-    try{
-        // const cookies = req.cookies;
-    
-        // const {token} = cookies;
-        // if(!token){
-        //     throw new Error("Invalid Token");
-        // }
-    
-    
-        // Validate my token
-    
-        // const decodedMessage = await jwt.verify(token,"Dev@Tinder$790");
-        // console.log(decodedMessage);
-        // const{_id} = decodedMessage;
-        // console.log("logged in user is :" + _id); 
-        // const user = await User.findById(_id);
-        const user = req.user;
-        // if(!user){
-        //     throw new Error("User not found");
-        // }
-    
-        // console.log(cookies);
-        // res.send("Sending Cookies");
-        res.send(user);
-
-    }catch(e){
-        res.status(400).send("ERROR: " + e.message);
-    }
-});
-
-
 //  Finding data with the help of email.
 // app.get("/user",async (req,res)=>{
 //     const userEmail = req.body.emailId;
@@ -234,65 +180,6 @@ app.get('/profile', userAuth, async (req, res)=>{
 //     }
 // });
 
-
-
-app.post("/signup",async (req,res)=>{
-    console.log(req.body);
-    try{
-        // validation of the data
-        validateSignUpData(req);
-        const {firstName, lastName,emailId,gender,password} = req.body;
-
-        // encrypting the password
-
-        const passwordHash = await bcrypt.hash(password,10);
-        console.log(passwordHash);
-        
-
-
-
-        // Creating a new instance of the user model
-        // const user = new User(req.body);
-        const user = new User({
-            firstName,
-            lastName,
-            emailId,
-            password:passwordHash,
-            gender
-        });
-
-        await user.save();
-        res.send('user added successfully');
-    }catch(err){
-        return res.status(400).send("ERROR:" + err.message);
-    }
-    // using dummy data first
-    // const userObj = {
-    //     firstName:"sailesh",
-    //     lastName:"Kumar",
-    //     emailId:"sailesh@gmail.com",
-    //     password:"sailesh@123",
-    //     gender:"male",
-    // }
-    // Creating a new instance of the user model.
-    // const user = new User(userObj);
-        // const user = new User(req.body);
-
-    // const user = new User(
-    //     {
-    //         firstName:"sailesh",
-    //         lastName:"Kumar",
-    //         email:"sailesh@gmail.com",
-    //         password:"123456"
-    //     }
-    // );
-    // try{
-    //     await user.save();
-    //     res.send('user added successfully')
-    // }catch(err){
-    //     res.status(500).send("ERROR: " + err.message);
-    // }
-});
 // app.patch('/user/:userId',async (req, res) => {
 // // app.patch('/user',async (req, res) => {
 //     // const userId = req.body.userId;
@@ -321,17 +208,6 @@ app.post("/signup",async (req,res)=>{
 //         res.status(400).send("Update failed: " + err.message);
 //     };
 // })
-
-app.post("/sendConnectionRequest", userAuth, async (req, res) => {
-
-    const user = req.user;
-    // sending a connection request
-    console.log("Sending a connection request");
-
-    res.send(user.firstName  + " : Sent a connection request")
-})
-
-
 connectDB().then(()=>{
     console.log("Connected to database");  
     app.listen(3000,()=>{
